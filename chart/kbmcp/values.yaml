@@ -16,11 +16,11 @@ image:
 # Filled at package/install time. Leave placeholders empty in the template chart.
 env:
   # Apps-in-Olares Router base URL including /v1 (example: http://<id>.shared.olares.com/v1)
-  ROUTER_BASE_URL: ""
+  ROUTER_BASE_URL: "https://router.woojinc1205.olares.com/v1"
   ROUTER_API_KEY: "olares"
   # Full Router model names, copied from Router after install
-  CHAT_MODEL: ""
-  EMBED_MODEL: ""
+  CHAT_MODEL: "Olares/unsloth/Qwen3.6-27B-GGUF:Q4_K_M"
+  EMBED_MODEL: "Olares/embeddinggemma-300m"
   # Comma-separated name:token pairs. Empty here on purpose — bake in via build-package.sh.
   MCP_TOKENS: ""
   # Public hostname(s) for DNS-rebinding protection, e.g. kb.woojinc1205.olares.com

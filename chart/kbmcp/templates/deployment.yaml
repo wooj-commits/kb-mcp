@@ -20,11 +20,9 @@ spec:
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
       automountServiceAccountToken: false
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+      # No pod-level securityContext: Olares injects olares-mesh-in-agent-iptables
+      # as a root sidecar; pod runAsNonRoot/runAsUser breaks CreateContainerConfigError.
+      # The kbmcp image already runs as uid 1000 (Dockerfile USER kb).
       containers:
       - name: kbmcp
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

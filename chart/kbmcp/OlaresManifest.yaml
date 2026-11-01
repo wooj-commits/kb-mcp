@@ -8,7 +8,7 @@ metadata:
   title: Knowledge Base MCP
   description: Private knowledge-base assistant over MCP (Bearer-token protected)
   icon: https://app.cdn.olares.com/appstore/default/defaulticon.webp
-  version: 0.1.0
+  version: 0.1.1
   categories:
   - AI
 
@@ -31,7 +31,7 @@ permission:
   - Home
 
 spec:
-  versionName: '0.1.0'
+  versionName: '0.1.1'
   fullDescription: |
     A CPU-only Python MCP server that indexes articles dropped into
     Files > Home > KnowledgeBase and answers questions with citations.
