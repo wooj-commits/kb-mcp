@@ -24,7 +24,7 @@ env:
   # Comma-separated name:token pairs. Empty here on purpose — bake in via build-package.sh.
   MCP_TOKENS: ""
   # Public hostname(s) for DNS-rebinding protection, e.g. kb.woojinc1205.olares.com
-  MCP_ALLOWED_HOSTS: "kb.woojinc1205.olares.com"
+  MCP_ALLOWED_HOSTS: "kb.woojinc1205.olares.com,b336a42a.woojinc1205.olares.com"
   KB_SOURCE_DIR: "/kb/articles"
   KB_DATA_DIR: "/app/data"
   KB_SYNC_INTERVAL: "900"
