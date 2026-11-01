@@ -1,0 +1,12 @@
+.venv
+__pycache__
+logs
+*.pyc
+.pytest_cache
+.git
+.github
+chart
+tests
+build-package.sh
+README.md
+.gitignore

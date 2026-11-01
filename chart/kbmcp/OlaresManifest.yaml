@@ -1,0 +1,72 @@
+olaresManifest.version: '0.12.0'
+olaresManifest.type: app
+apiVersion: 'v3'
+
+metadata:
+  name: kbmcp
+  appid: kbmcp
+  title: Knowledge Base MCP
+  description: Private knowledge-base assistant over MCP (Bearer-token protected)
+  icon: https://app.cdn.olares.com/appstore/default/defaulticon.webp
+  version: 0.1.0
+  categories:
+  - AI
+
+entrances:
+# Public entrance: MCP clients cannot do Olares login. BearerAuth is the gate.
+- name: kb
+  host: kbmcp
+  port: 8000
+  title: Knowledge Base MCP
+  icon: https://app.cdn.olares.com/appstore/default/defaulticon.webp
+  authLevel: public
+  invisible: true
+  openMethod: window
+
+permission:
+  # Persistent index / manifest / saved markdown under appData
+  appData: true
+  # Mount the user's Home so we can read Home/KnowledgeBase
+  userData:
+  - Home
+
+spec:
+  versionName: '0.1.0'
+  fullDescription: |
+    A CPU-only Python MCP server that indexes articles dropped into
+    Files > Home > KnowledgeBase and answers questions with citations.
+    The public entrance is protected by per-party Bearer tokens
+    (MCP_TOKENS). Chat and embeddings go through Olares Router to
+    your local chat model and EmbeddingGemma — those apps stay private.
+  developer: woojinc1205
+  website: https://github.com/wooj-commits
+  sourceCode: https://github.com/wooj-commits/kb-mcp
+  submitter: woojinc1205
+  doc: https://github.com/wooj-commits/kb-mcp
+  locale:
+  - en-US
+  license:
+  - text: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  supportArch:
+  - amd64
+  requiredCpu: 500m
+  limitedCpu: "2"
+  requiredMemory: 1Gi
+  limitedMemory: 3Gi
+  requiredDisk: 256Mi
+  limitedDisk: 8Gi
+
+options:
+  # Tool calls (ask) can take a while when the local model is cold.
+  apiTimeout: 0
+  dependencies:
+  - name: olares
+    type: system
+    version: '>=1.12.7-0'
+  # Router / model apps are configured via ROUTER_BASE_URL after install.
+  # Cross-app calls from this pod should use a *.shared.olares.com entrance
+  # (or Router's Apps-in-Olares URL), not ClusterIP, because of network policy.
+
+workloadReplicas:
+  kbmcp: 1

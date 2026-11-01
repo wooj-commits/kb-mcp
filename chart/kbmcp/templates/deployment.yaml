@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kbmcp
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: kbmcp
+spec:
+  replicas: {{ .Values.workloads.kbmcp.replicaCount }}
+  selector:
+    matchLabels:
+      app: kbmcp
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kbmcp
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: kbmcp
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        env:
+        - name: ROUTER_BASE_URL
+          value: {{ .Values.env.ROUTER_BASE_URL | quote }}
+        - name: ROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kbmcp-env
+              key: ROUTER_API_KEY
+        - name: CHAT_MODEL
+          value: {{ .Values.env.CHAT_MODEL | quote }}
+        - name: EMBED_MODEL
+          value: {{ .Values.env.EMBED_MODEL | quote }}
+        - name: MCP_TOKENS
+          valueFrom:
+            secretKeyRef:
+              name: kbmcp-env
+              key: MCP_TOKENS
+        - name: MCP_ALLOWED_HOSTS
+          value: {{ .Values.env.MCP_ALLOWED_HOSTS | quote }}
+        - name: KB_SOURCE_DIR
+          value: {{ .Values.env.KB_SOURCE_DIR | quote }}
+        - name: KB_DATA_DIR
+          value: {{ .Values.env.KB_DATA_DIR | quote }}
+        - name: KB_SYNC_INTERVAL
+          value: {{ .Values.env.KB_SYNC_INTERVAL | quote }}
+        - name: MCP_RATE_LIMIT
+          value: {{ .Values.env.MCP_RATE_LIMIT | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.env.LOG_LEVEL | quote }}
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu | quote }}
+            memory: {{ .Values.resources.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu | quote }}
+            memory: {{ .Values.resources.limits.memory | quote }}
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 20
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: articles
+          mountPath: /kb/articles
+          readOnly: true
+      volumes:
+      # Persistent Chroma index, manifest.json, saved Markdown
+      - name: data
+        hostPath:
+          path: '{{ .Values.userspace.appData }}/kbmcp'
+          type: DirectoryOrCreate
+      # Files > Home > KnowledgeBase (read-only). permission.userData: [Home]
+      # makes userspace.userData resolve to the user's Home root.
+      - name: articles
+        hostPath:
+          path: '{{ .Values.userspace.userData }}/KnowledgeBase'
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kbmcp
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: kbmcp
+spec:
+  type: ClusterIP
+  selector:
+    app: kbmcp
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP

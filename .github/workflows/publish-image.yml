@@ -1,0 +1,70 @@
+name: Publish image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: wooj-commits/kb-mcp
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:0.1.0
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=kb-mcp
+            org.opencontainers.image.description=Private knowledge-base MCP server for Olares
+          provenance: false
+
+      - name: Make GHCR package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          OWNER="${{ github.repository_owner }}"
+          PKG="kb-mcp"
+          # User-owned packages
+          if gh api --method PUT "users/${OWNER}/packages/container/${PKG}/visibility" \
+              -f visibility=public; then
+            echo "Set user-owned GHCR package visibility to public."
+            exit 0
+          fi
+          # Org-owned packages
+          if gh api --method PUT "orgs/${OWNER}/packages/container/${PKG}/visibility" \
+              -f visibility=public; then
+            echo "Set org-owned GHCR package visibility to public."
+            exit 0
+          fi
+          echo "::warning::Could not flip GHCR visibility via API (GITHUB_TOKEN often lacks packages admin). Toggle Public at https://github.com/users/${OWNER}/packages/container/${PKG}/settings — Olares pulls anonymously."
+          exit 0
