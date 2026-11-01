@@ -23,6 +23,23 @@ spec:
       # No pod-level securityContext: Olares injects olares-mesh-in-agent-iptables
       # as a root sidecar; pod runAsNonRoot/runAsUser breaks CreateContainerConfigError.
       # The kbmcp image already runs as uid 1000 (Dockerfile USER kb).
+      initContainers:
+      # appData hostPath is root-owned; chown so the uid-1000 app can write the index.
+      - name: init-permissions
+        image: docker.io/beclab/aboveos-busybox:1.37.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        command:
+        - sh
+        - -ec
+        - |
+          mkdir -p /app/data/index /app/data/articles
+          chown -R 1000:1000 /app/data
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
       containers:
       - name: kbmcp
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
